@@ -1,5 +1,3 @@
-
-
 ## STEPS TO RUN THE SERVER 
 
 """ 
