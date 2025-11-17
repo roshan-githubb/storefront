@@ -4,11 +4,10 @@ import Link from "next/link"
 import { CartIcon } from "@/icons"
 import Image from "next/image"
 import { StarRating } from "@/components/atoms"
-// import { ShoppingCart } from 'lucide-react'
 
 export const ProductCard = ({}: {}) => {
   return (
-    <div className="w-full max-w-md mx-auto    flex flex-row md:flex-col gap-3">
+    <div className="w-full max-w-md mx-auto flex flex-row md:flex-col gap-3">
       {/* Image Section */}
       <div className="w-[45%] md:w-full flex-shrink-0">
         <Image
@@ -16,15 +15,13 @@ export const ProductCard = ({}: {}) => {
           alt="Product"
           width={500}
           height={500}
-          className="rounded-xl object-cover w-full h-full  md:max-h-64"
+          className="rounded-xl object-cover w-full h-full md:max-h-64"
         />
       </div>
 
       {/* Info Section */}
       <div className="w-[55%] md:w-full flex flex-col justify-between">
         <div>
-          {/* Title */}
-
           {/* Title */}
           <Link href={`/items/1`} className="block hover:underline">
             <h2 className="text-[16px] md:text-lg text-black line-clamp-3">
@@ -34,7 +31,6 @@ export const ProductCard = ({}: {}) => {
           </Link>
 
           {/* Rating */}
-
           <div className="text-sm flex items-center gap-1 mt-1">
             <span className="font-bold text-gray-700">4.5</span>
             <StarRating rate={4.5} starSize={10} />
@@ -88,3 +84,5 @@ export const ProductCard = ({}: {}) => {
     </div>
   )
 }
+
+ProductCard.displayName = "ProductCard"

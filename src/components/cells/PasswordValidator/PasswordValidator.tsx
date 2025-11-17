@@ -34,24 +34,25 @@ export const PasswordValidator = ({
     symbolOrDigit: false,
   })
 
-  useEffect(() => {
-    const validation = validatePassword(password)
+ useEffect(() => {
+  const validation = validatePassword(password)
 
-    setError({
-      isValid: validation.isValid,
-      lower: validation.errors.noLower,
-      upper: validation.errors.noUpper,
-      "8chars": validation.errors.tooShort,
-      symbolOrDigit: validation.errors.noDigitOrSymbol,
-    })
-    setNewPasswordError({
-      isValid: validation.isValid,
-      lower: validation.errors.noLower,
-      upper: validation.errors.noUpper,
-      "8chars": validation.errors.tooShort,
-      symbolOrDigit: validation.errors.noDigitOrSymbol,
-    })
-  }, [password])
+  setError({
+    isValid: validation.isValid,
+    lower: validation.errors.noLower,
+    upper: validation.errors.noUpper,
+    "8chars": validation.errors.tooShort,
+    symbolOrDigit: validation.errors.noDigitOrSymbol,
+  })
+  setNewPasswordError({
+    isValid: validation.isValid,
+    lower: validation.errors.noLower,
+    upper: validation.errors.noUpper,
+    "8chars": validation.errors.tooShort,
+    symbolOrDigit: validation.errors.noDigitOrSymbol,
+  })
+}, [password, setError])
+
   return (
     <Card className="p-4">
       <p
@@ -89,3 +90,4 @@ export const PasswordValidator = ({
     </Card>
   )
 }
+PasswordValidator.displayName="PasswordValidator"

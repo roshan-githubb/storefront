@@ -226,15 +226,15 @@ export default function ItemDetailPage({ id }: { id: string }) {
           <div className="bg-[#F80000]  text-white px-3 py-1.5 rounded-sm text-sm font-semibold w-fit">
             45% OFF + Cash on Delivery
           </div>
-          <div className="flex items-center gap-2">
-            <div className="px-2 py-0.5 text-[32px] text-[#F80000] rounded-md font-semibold">
+          <div className="flex items-center">
+            <div className="px-1 py-0.5 text-[32px] text-[#F80000] rounded-md font-medium">
               -45%
             </div>
             <div className="px-2 py-0.5 rounded-md text-xs font-semibold flex items-baseline gap-0.5">
               <span className="text-[14px] align-top relative -top-0.5">
                 Rs
               </span>
-              <span className="text-[32px] font-bold">{product.price}</span>
+              <span className="text-[32px] font-medium">{product.price}</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -345,10 +345,10 @@ export default function ItemDetailPage({ id }: { id: string }) {
                   and exceptional comfort, nothing the high-quality, soft fabric
                   offers great value for the price. Many highlight that it holds
                   up beautifully after washing with no shrinking, and the
-                  accurate 'slim fit' description makes online shopping
-                  hassle-free. It has quickly become a go-to piece for both the
-                  office and casual wear, with several users mentioning they
-                  receive frequent compliments. Overall, buyers are highly
+                  accurate &apos;slim fit&apos; description makes online
+                  shopping hassle-free. It has quickly become a go-to piece for
+                  both the office and casual wear, with several users mentioning
+                  they receive frequent compliments. Overall, buyers are highly
                   satisfied and report they are likely to purchase more colors.
                 </span>
               </div>

@@ -1,4 +1,4 @@
-import { Navbar } from "./Navbar/Navbar"
+import Navbar from "./Navbar/Navbar"
 import { CustomCarousel as Carousel } from "./Carousel/Carousel"
 import { Pagination } from "./Pagination/Pagination"
 import { ProductFilter } from "./ProductFilter/ProductFilter"

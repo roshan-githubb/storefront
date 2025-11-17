@@ -37,18 +37,18 @@ const ProductsListing = ({ locale }: { locale: string }) => {
   const [prod, setProd] = useState<HttpTypes.StoreProduct[] | null>(null)
   const { items } = useHits()
 
-  useEffect(() => {
-    listProducts({
-      countryCode: locale,
-      queryParams: {
-        limit: 99999,
-        fields:
-          "*variants.calculated_price,*seller.reviews,-thumbnail,-images,-type,-tags,-variants.options,-options,-collection,-collection_id",
-      },
-    }).then(({ response }) => {
-      setProd(response.products)
-    })
-  }, [])
+useEffect(() => {
+  listProducts({
+    countryCode: locale,
+    queryParams: {
+      limit: 99999,
+      fields:
+        "*variants.calculated_price,*seller.reviews,-thumbnail,-images,-type,-tags,-variants.options,-options,-collection,-collection_id",
+    },
+  }).then(({ response }) => {
+    setProd(response.products)
+  })
+}, [locale])
 
   return (
     <>
@@ -84,3 +84,4 @@ const ProductsListing = ({ locale }: { locale: string }) => {
     </>
   )
 }
+AlgoliaProductsCarousel.displayName="AlgoliaProductsCarousel"

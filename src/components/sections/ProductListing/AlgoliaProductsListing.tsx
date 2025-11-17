@@ -31,10 +31,10 @@ export const AlgoliaProductsListing = ({
   seller_handle?: string
   currency_code: string
 }) => {
-  const searchParamas = useSearchParams()
+  const searchParams = useSearchParams() // fixed typo
 
-  const facetFilters: string = getFacedFilters(searchParamas)
-  const query: string = searchParamas.get("query") || ""
+  const facetFilters: string = getFacedFilters(searchParams)
+  const query: string = searchParams.get("query") || ""
 
   const filters = `${
     seller_handle
@@ -71,12 +71,9 @@ const ProductsListing = ({
   currency_code: string
   filters: string
 }) => {
-  const [apiProducts, setApiProducts] = useState<
-    HttpTypes.StoreProduct[] | null
-  >(null)
+  const [apiProducts, setApiProducts] = useState<HttpTypes.StoreProduct[] | null>(null)
   const { items, results } = useHits()
-
-  const searchParamas = useSearchParams()
+  const searchParams = useSearchParams() // fixed typo
 
   async function handleSetProducts() {
     try {
@@ -94,7 +91,7 @@ const ProductsListing = ({
       setApiProducts(
         response.products.filter((prod) => {
           const { cheapestPrice } = getProductPrice({ product: prod })
-          return Boolean(cheapestPrice) && prod
+          return Boolean(cheapestPrice)
         })
       )
     } catch (error) {
@@ -104,19 +101,19 @@ const ProductsListing = ({
 
   useEffect(() => {
     handleSetProducts()
-  }, [items.length])
+}, [items, locale, handleSetProducts])
 
   if (!results?.processingTimeMS) return <ProductListingSkeleton />
 
-  const page: number = +(searchParamas.get("page") || 1)
+  const page: number = +(searchParams.get("page") || 1)
   const filteredProducts = items.filter((pr) =>
-    apiProducts?.some((p: any) => p.id === pr.objectID)
+    apiProducts?.some((p) => p.id === pr.objectID)
   )
 
   const products = filteredProducts
     .filter((pr) =>
       apiProducts?.some(
-        (p: any) => p.id === pr.objectID && filterProductsByCurrencyCode(p)
+        (p) => p.id === pr.objectID && filterProductsByCurrencyCode(p)
       )
     )
     .slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
@@ -125,37 +122,31 @@ const ProductsListing = ({
   const pages = Math.ceil(count / PRODUCT_LIMIT) || 1
 
   function filterProductsByCurrencyCode(product: HttpTypes.StoreProduct) {
-    const minPrice = searchParamas.get("min_price")
-    const maxPrice = searchParamas.get("max_price")
+    const minPrice = searchParams.get("min_price")
+    const maxPrice = searchParams.get("max_price")
 
-    if ([minPrice, maxPrice].some((price) => typeof price === "string")) {
-      const variantsWithCurrencyCode = product?.variants?.filter(
-        (variant) => variant.calculated_price?.currency_code === currency_code
+    const variantsWithCurrencyCode = product?.variants?.filter(
+      (variant) => variant.calculated_price?.currency_code === currency_code
+    )
+
+    if (!variantsWithCurrencyCode?.length) return false
+
+    if (minPrice && maxPrice) {
+      return variantsWithCurrencyCode.some(
+        (variant) =>
+          (variant.calculated_price?.calculated_amount ?? 0) >= +minPrice &&
+          (variant.calculated_price?.calculated_amount ?? 0) <= +maxPrice
       )
-
-      if (!variantsWithCurrencyCode?.length) {
-        return false
-      }
-
-      if (minPrice && maxPrice) {
-        return variantsWithCurrencyCode.some(
-          (variant) =>
-            (variant.calculated_price?.calculated_amount ?? 0) >= +minPrice &&
-            (variant.calculated_price?.calculated_amount ?? 0) <= +maxPrice
-        )
-      }
-      if (minPrice) {
-        return variantsWithCurrencyCode.some(
-          (variant) =>
-            (variant.calculated_price?.calculated_amount ?? 0) >= +minPrice
-        )
-      }
-      if (maxPrice) {
-        return variantsWithCurrencyCode.some(
-          (variant) =>
-            (variant.calculated_price?.calculated_amount ?? 0) <= +maxPrice
-        )
-      }
+    }
+    if (minPrice) {
+      return variantsWithCurrencyCode.some(
+        (variant) => (variant.calculated_price?.calculated_amount ?? 0) >= +minPrice
+      )
+    }
+    if (maxPrice) {
+      return variantsWithCurrencyCode.some(
+        (variant) => (variant.calculated_price?.calculated_amount ?? 0) <= +maxPrice
+      )
     }
 
     return true
@@ -184,18 +175,18 @@ const ProductsListing = ({
           ) : (
             <div className="w-full">
               <ul className="flex flex-wrap gap-4">
-                {products.map(
-                  (hit) =>
-                    apiProducts?.find((p: any) => p.id === hit.objectID) && (
+                {products.map((hit) => {
+                  const apiProduct = apiProducts?.find((p) => p.id === hit.objectID)
+                  return (
+                    apiProduct && (
                       <ProductCard
-                        api_product={apiProducts?.find(
-                          (p: any) => p.id === hit.objectID
-                        )}
+                        api_product={apiProduct}
                         key={hit.objectID}
                         product={hit}
                       />
                     )
-                )}
+                  )
+                })}
               </ul>
             </div>
           )}
@@ -205,3 +196,4 @@ const ProductsListing = ({
     </div>
   )
 }
+AlgoliaProductsListing.displayName = "AlgoliaProductsListing"

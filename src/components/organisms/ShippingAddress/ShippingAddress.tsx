@@ -37,12 +37,12 @@ const ShippingAddress = ({
 
   // check if customer has saved addresses that are in the current region
   const addressesInRegion = useMemo(
-    () =>
-      customer?.addresses.filter(
-        (a) => a.country_code && a.country_code === locale
-      ),
-    [customer?.addresses]
-  )
+  () =>
+    customer?.addresses.filter(
+      (a) => a.country_code && a.country_code === locale
+    ),
+  [customer?.addresses, locale]
+)
 
   const setFormAddress = (
     address?: HttpTypes.StoreCartAddress,
@@ -70,15 +70,15 @@ const ShippingAddress = ({
   }
 
   useEffect(() => {
-    // Ensure cart is not null and has a shipping_address before setting form data
-    if (cart && cart.shipping_address) {
-      setFormAddress(cart?.shipping_address, cart?.email)
-    }
+  if (cart && cart.shipping_address) {
+    setFormAddress(cart?.shipping_address, cart?.email)
+  }
 
-    if (cart && !cart.email && customer?.email) {
-      setFormAddress(undefined, customer.email)
-    }
-  }, [cart]) // Add cart as a dependency
+  if (cart && !cart.email && customer?.email) {
+    setFormAddress(undefined, customer.email)
+  }
+}, [cart, customer?.email, setFormAddress])
+
 
   const handleChange = (
     e: React.ChangeEvent<
