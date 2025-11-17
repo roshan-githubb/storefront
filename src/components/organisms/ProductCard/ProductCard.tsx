@@ -1,91 +1,29 @@
 "use client"
-import Image from "next/image"
 
+import Image from "next/image"
 import { Button } from "@/components/atoms"
 import { HttpTypes } from "@medusajs/types"
-
-import { getSellerProductPrice } from "@/lib/helpers/get-seller-product-price"
-import { getProductPrice } from "@/lib/helpers/get-product-price"
 import { BaseHit, Hit } from "instantsearch.js"
 import clsx from "clsx"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
-import { convertToLocale } from "@/lib/helpers/money"
-
-const getRegionPrice = (product: any, currency_code: string) => {
-  const variant = product.variants?.find((variant: any) => {
-    return variant.prices
-      ? variant.prices?.some(
-          (price: any) => price.currency_code === currency_code
-        )
-      : variant.calculated_price
-  })
-
-  const price = variant?.calculated_price
-    ? {
-        calculated_price: convertToLocale({
-          amount: variant.calculated_price.calculated_amount,
-          currency_code: variant.calculated_price.currency_code,
-        }),
-        original_price: convertToLocale({
-          amount: variant.calculated_price.original_amount,
-          currency_code: variant.calculated_price.currency_code,
-        }),
-      }
-    : {
-        calculated_price: variant?.prices?.find(
-          (price: any) => price.currency_code === currency_code
-        ).amount
-          ? convertToLocale({
-              amount: variant?.prices?.find(
-                (price: any) => price.currency_code === currency_code
-              ).amount,
-              currency_code,
-            })
-          : null,
-        original_price: variant?.prices?.find(
-          (price: any) => price.currency_code === currency_code
-        ).original_amount
-          ? convertToLocale({
-              amount: variant.prices.find(
-                (price: any) => price.currency_code === currency_code
-              ).original_amount,
-              currency_code,
-            })
-          : null,
-      }
-
-  return price
-}
+import { getProductPrice } from "@/lib/helpers/get-product-price"
 
 export const ProductCard = ({
   product,
-  currency_code,
+  api_product,
 }: {
   product: Hit<HttpTypes.StoreProduct> | Partial<Hit<BaseHit>>
-  currency_code?: string
+  api_product?: HttpTypes.StoreProduct | null
 }) => {
-  // const variantId = product.variants.find((variant: any) =>
-  //   variant.prices?.some((price: any) => price.currency_code === currency_code)
-  // )?.id
-
-  // const { variantPrice } = getProductPrice({
-  //   product,
-  //   variantId,
-  // })
-
-  // const { variantPrice: sellerVariantPrice } = getSellerProductPrice({
-  //   product,
-  //   variantId,
-  // })
-
-  const price = getRegionPrice(product, currency_code || "npr")
-
-  console.log({ product, price });
-  
-
-  if (!price.calculated_price) {
+  if (!api_product) {
     return null
   }
+
+  const { cheapestPrice } = getProductPrice({
+    product: api_product! as HttpTypes.StoreProduct,
+  })
+
+  const productName = String(product.title || "Product")
 
   return (
     <div
@@ -94,65 +32,63 @@ export const ProductCard = ({
       )}
     >
       <div className="relative w-full h-full bg-primary aspect-square">
-        <LocalizedClientLink href={`/products/${product.handle}`}>
+        <LocalizedClientLink
+          href={`/products/${product.handle}`}
+          aria-label={`View ${productName}`}
+          title={`View ${productName}`}
+        >
           <div className="overflow-hidden rounded-sm w-full h-full flex justify-center align-center ">
             {product.thumbnail ? (
               <Image
-                src={decodeURIComponent(product.thumbnail)}
-                alt={product.title}
-                width={360}
-                height={360}
-                className="object-cover aspect-square w-full object-center h-full lg:group-hover:-mt-14 transition-all duration-300 rounded-xs"
                 priority
+                fetchPriority="high"
+                src={decodeURIComponent(product.thumbnail)}
+                alt={`${productName} image`}
+                width={100}
+                height={100}
+                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                className="object-cover aspect-square w-full object-center h-full lg:group-hover:-mt-14 transition-all duration-300 rounded-xs"
               />
             ) : (
               <Image
+                priority
+                fetchPriority="high"
                 src="/images/placeholder.svg"
-                alt="Product placeholder"
+                alt={`${productName} image placeholder`}
                 width={100}
                 height={100}
+                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
               />
             )}
           </div>
         </LocalizedClientLink>
-        <LocalizedClientLink href={`/products/${product.handle}`}>
+        <LocalizedClientLink
+          href={`/products/${product.handle}`}
+          aria-label={`See more about ${productName}`}
+          title={`See more about ${productName}`}
+        >
           <Button className="absolute rounded-sm bg-action text-action-on-primary h-auto lg:h-[48px] lg:group-hover:block hidden w-full uppercase bottom-1 z-10">
             See More
           </Button>
         </LocalizedClientLink>
       </div>
-      <LocalizedClientLink href={`/products/${product.handle}`}>
+      <LocalizedClientLink
+        href={`/products/${product.handle}`}
+        aria-label={`Go to ${productName} page`}
+        title={`Go to ${productName} page`}
+      >
         <div className="flex justify-between p-4">
           <div className="w-full">
             <h3 className="heading-sm truncate">{product.title}</h3>
             <div className="flex items-center gap-2 mt-2">
-              <p className="font-medium">{price.calculated_price}</p>
-              {price.original_price &&
-                price.calculated_price !== price.original_price && (
-                  <p className="text-sm text-gray-500 line-through">
-                    {price.original_price}
-                  </p>
-                )}
+              <p className="font-medium">{cheapestPrice?.calculated_price}</p>
+              {cheapestPrice?.calculated_price !==
+                cheapestPrice?.original_price && (
+                <p className="text-sm text-gray-500 line-through">
+                  {cheapestPrice?.original_price}
+                </p>
+              )}
             </div>
-            {/* <div className="flex items-center gap-2 mt-2">
-              <p className="font-medium">
-                {sellerVariantPrice?.calculated_price ||
-                  variantPrice?.calculated_price}
-              </p>
-              {sellerVariantPrice?.calculated_price
-                ? sellerVariantPrice?.calculated_price !==
-                    sellerVariantPrice?.original_price && (
-                    <p className="text-sm text-gray-500 line-through">
-                      {sellerVariantPrice?.original_price}
-                    </p>
-                  )
-                : variantPrice?.calculated_price !==
-                    variantPrice?.original_price && (
-                    <p className="text-sm text-gray-500 line-through">
-                      {variantPrice?.original_price}
-                    </p>
-                  )}
-            </div> */}
           </div>
         </div>
       </LocalizedClientLink>

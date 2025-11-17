@@ -2,28 +2,28 @@
 
 import { Input } from "@/components/atoms"
 import { SearchIcon } from "@/icons"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useState } from "react"
-import { redirect } from "next/navigation"
 
-export const NavbarSearch = () => {
+export function NavbarSearch() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const [search, setSearch] = useState(searchParams.get("query") || "")
 
-  const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+  const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (search) {
-      redirect(`/categories?query=${search}`)
+      router.push(`/categories?query=${search}`)
     } else {
-      redirect(`/categories`)
+      router.push(`/categories`)
     }
   }
 
   return (
     <form className="flex items-center" method="POST" onSubmit={submitHandler}>
       <Input
-        icon={<SearchIcon />}
+        icon={<SearchIcon className="w-4 h-4 text-gray-500" />}
         placeholder="Search product"
         value={search}
         changeValue={setSearch}

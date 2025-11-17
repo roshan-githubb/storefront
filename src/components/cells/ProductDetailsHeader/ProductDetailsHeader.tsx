@@ -11,6 +11,8 @@ import { Chat } from "@/components/organisms/Chat/Chat"
 import { SellerProps } from "@/types/seller"
 import { WishlistButton } from "../WishlistButton/WishlistButton"
 import { Wishlist } from "@/types/wishlist"
+import { toast } from "@/lib/helpers/toast"
+import { useCartContext } from "@/components/providers"
 
 const optionsAsKeymap = (
   variantOptions: HttpTypes.StoreProductVariant["options"]
@@ -39,14 +41,24 @@ export const ProductDetailsHeader = ({
   user: HttpTypes.StoreCustomer | null
   wishlist?: Wishlist[]
 }) => {
+  const { onAddToCart, cart } = useCartContext()
   const [isAdding, setIsAdding] = useState(false)
   const { allSearchParams } = useGetAllSearchParams()
 
+  const { cheapestVariant, cheapestPrice } = getProductPrice({
+    product,
+  })
+
+  // Check if product has any valid prices in current region
+  const hasAnyPrice = cheapestPrice !== null && cheapestVariant !== null
+
   // set default variant
-  const selectedVariant = {
-    ...optionsAsKeymap(product?.variants?.[0].options ?? null),
-    ...allSearchParams,
-  }
+  const selectedVariant = hasAnyPrice
+    ? {
+        ...optionsAsKeymap(cheapestVariant.options ?? null),
+        ...allSearchParams,
+      }
+    : allSearchParams
 
   // get selected variant id
   const variantId =
@@ -64,29 +76,56 @@ export const ProductDetailsHeader = ({
     variantId,
   })
 
-  // add the selected variant to the cart
-  const handleAddToCart = async () => {
-    if (!variantId) return null
-
-    setIsAdding(true)
-
-    await addToCart({
-      variantId: variantId,
-      quantity: 1,
-      countryCode: locale,
-    })
-
-    setIsAdding(false)
-  }
-
   const variantStock =
     product.variants?.find(({ id }) => id === variantId)?.inventory_quantity ||
     0
 
-  const variantHasPrice = product.variants?.find(({ id }) => id === variantId)
+  const variantHasPrice = !!product.variants?.find(({ id }) => id === variantId)
     ?.calculated_price
-    ? true
-    : false
+
+  const isVariantStockMaxLimitReached =
+    (cart?.items?.find((item) => item.variant_id === variantId)?.quantity ??
+      0) >= variantStock
+
+  // add the selected variant to the cart
+  const handleAddToCart = async () => {
+    if (!variantId || !hasAnyPrice) return null
+
+    setIsAdding(true)
+
+    const subtotal = +(variantPrice?.calculated_price_without_tax_number || 0)
+    const total = +(variantPrice?.calculated_price_number || 0)
+
+    const storeCartLineItem = {
+      thumbnail: product.thumbnail || "",
+      product_title: product.title,
+      quantity: 1,
+      subtotal,
+      total,
+      tax_total: total - subtotal,
+      variant_id: variantId,
+      product_id: product.id,
+      variant: product.variants?.find(({ id }) => id === variantId),
+    }
+
+    try {
+      if (!isVariantStockMaxLimitReached) {
+        onAddToCart(storeCartLineItem, variantPrice?.currency_code || "eur")
+      }
+      await addToCart({
+        variantId: variantId,
+        quantity: 1,
+        countryCode: locale,
+      })
+    } catch (error) {
+      toast.error({
+        title: "Error adding to cart",
+        description: "Some variant does not have the required inventory",
+      })
+    } finally {
+      setIsAdding(false)
+    }
+  }
 
   return (
     <div className="border rounded-sm p-5">
@@ -97,13 +136,21 @@ export const ProductDetailsHeader = ({
           </h2>
           <h1 className="heading-lg text-primary">{product.title}</h1>
           <div className="mt-2 flex gap-2 items-center">
-            <span className="heading-md text-primary">
-              {variantPrice?.calculated_price}
-            </span>
-            {variantPrice?.calculated_price_number !==
-              variantPrice?.original_price_number && (
-              <span className="label-md text-secondary line-through">
-                {variantPrice?.original_price}
+            {hasAnyPrice && variantPrice ? (
+              <>
+                <span className="heading-md text-primary">
+                  {variantPrice.calculated_price}
+                </span>
+                {variantPrice.calculated_price_number !==
+                  variantPrice.original_price_number && (
+                  <span className="label-md text-secondary line-through">
+                    {variantPrice.original_price}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="label-md text-secondary pt-2 pb-4">
+                Not available in your region
               </span>
             )}
           </div>
@@ -118,16 +165,22 @@ export const ProductDetailsHeader = ({
         </div>
       </div>
       {/* Product Variants */}
-      <ProductVariants product={product} selectedVariant={selectedVariant} />
+      {hasAnyPrice && (
+        <ProductVariants product={product} selectedVariant={selectedVariant} />
+      )}
       {/* Add to Cart */}
       <Button
         onClick={handleAddToCart}
-        disabled={isAdding || !variantStock || !variantHasPrice}
+        disabled={!variantStock || !variantHasPrice || !hasAnyPrice}
         loading={isAdding}
         className="w-full uppercase mb-4 py-3 flex justify-center"
         size="large"
       >
-        {variantStock && variantHasPrice ? "ADD TO CART" : "OUT OF STOCK"}
+        {!hasAnyPrice
+          ? "NOT AVAILABLE IN YOUR REGION"
+          : variantStock && variantHasPrice
+          ? "ADD TO CART"
+          : "OUT OF STOCK"}
       </Button>
       {/* Seller message */}
 

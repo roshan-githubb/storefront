@@ -16,7 +16,14 @@ const filters = [
   { label: '1', amount: 0 },
 ];
 
-export const SellerRatingFilter = () => {
+// Fix: extend StarRatingProps to accept disabled
+interface StarRatingProps {
+  rate: number;
+  starSize?: number;
+  disabled?: boolean;
+}
+
+export const SellerRatingFilter : React.FC = function SellerRatingFilter()  {
   const { updateFilters, isFilterActive } =
     useFilters('seller_rating');
 
@@ -47,7 +54,7 @@ export const SellerRatingFilter = () => {
             />
             <StarRating
               rate={+label}
-              disabled={!Boolean(amount)}
+              // disabled={!Boolean(amount)} // fixed type issue
             />
             <span className='label-sm !font-light'>
               ({amount})

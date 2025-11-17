@@ -15,16 +15,18 @@ export const listProducts = async ({
   regionId,
   category_id,
   collection_id,
+  forceCache = false,
 }: {
   pageParam?: number
   queryParams?: HttpTypes.FindParams &
     HttpTypes.StoreProductParams & {
-      handle?: string
+      handle?: string[]
     }
   category_id?: string
   collection_id?: string
   countryCode?: string
   regionId?: string
+  forceCache?: boolean
 }): Promise<{
   response: {
     products: (HttpTypes.StoreProduct & { seller?: SellerProps })[]
@@ -60,26 +62,35 @@ export const listProducts = async ({
     ...(await getAuthHeaders()),
   }
 
+  const useCached = forceCache || (limit <= 8 && !category_id && !collection_id)
+
   return sdk.client
     .fetch<{
-      products: HttpTypes.StoreProduct[]
+      products: (HttpTypes.StoreProduct & { seller?: SellerProps })[]
       count: number
     }>(`/store/products`, {
       method: "GET",
       query: {
+        country_code: countryCode,
         category_id,
         collection_id,
         limit,
         offset,
         region_id: region?.id,
         fields:
-          "*variants.calculated_price,+variants.inventory_quantity,*seller,*variants,*seller.products,*seller.reviews,*seller.reviews.customer",
+          "*variants.calculated_price,+variants.inventory_quantity,*seller,*variants,*seller.products," +
+          "*seller.reviews,*seller.reviews.customer,*seller.reviews.seller,*seller.products.variants,*attribute_values,*attribute_values.attribute",
         ...queryParams,
       },
       headers,
-      cache: "no-cache",
+      next: useCached ? { revalidate: 60 } : undefined,
+      cache: useCached ? "force-cache" : "no-cache",
     })
-    .then(({ products, count }) => {
+    .then(({ products: productsRaw, count }) => {
+      const products = productsRaw.filter(
+        (product) => product.seller?.store_status !== "SUSPENDED"
+      )
+
       const nextPage = count > offset + limit ? pageParam + 1 : null
 
       const response = products.filter((prod) => {
@@ -104,6 +115,16 @@ export const listProducts = async ({
           count,
         },
         nextPage: nextPage,
+        queryParams,
+      }
+    })
+    .catch(() => {
+      return {
+        response: {
+          products: [],
+          count: 0,
+        },
+        nextPage: 0,
         queryParams,
       }
     })
@@ -156,7 +177,11 @@ export const listProductsWithSort = async ({
     ? products.filter((product) => product.seller?.id === seller_id)
     : products
 
-  const sortedProducts = sortProducts(filteredProducts, sortBy)
+  const pricedProducts = filteredProducts.filter((prod) =>
+    prod.variants?.some((variant) => variant.calculated_price !== null)
+  )
+
+  const sortedProducts = sortProducts(pricedProducts, sortBy)
 
   const pageParam = (page - 1) * limit
 

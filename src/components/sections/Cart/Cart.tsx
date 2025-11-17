@@ -1,16 +1,16 @@
 import { Button } from "@/components/atoms"
-import { CartItems, CartSummary } from "@/components/organisms"
+import { CartEmpty, CartItems, CartSummary } from "@/components/organisms"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { retrieveCart } from "@/lib/data/cart"
 import CartPromotionCode from "../CartReview/CartPromotionCode"
-import { retrieveCustomer } from "@/lib/data/customer"
+import { EmptyCart } from "@/components/organisms/CartItems/EmptyCart"
 
 export const Cart = async () => {
-  const user = await retrieveCustomer();
   const cart = await retrieveCart()
 
-  console.log({user});
-  
+  if (!cart || !cart.items?.length) {
+    return <CartEmpty />
+  }
 
   return (
     <>
@@ -24,13 +24,14 @@ export const Cart = async () => {
         </div>
         <div className="border rounded-sm p-4 h-fit">
           <CartSummary
-            item_total={cart?.item_total || 0}
-            shipping_total={cart?.shipping_total || 0}
+            item_total={cart?.item_subtotal || 0}
+            shipping_total={cart?.shipping_subtotal || 0}
             total={cart?.total || 0}
             currency_code={cart?.currency_code || ""}
             tax={cart?.tax_total || 0}
+            discount_total={cart?.discount_total || 0}
           />
-          <LocalizedClientLink href={!user ? "/user" : "/checkout?step=address"}>
+          <LocalizedClientLink href="/checkout?step=address">
             <Button className="w-full py-3 flex justify-center items-center">
               Go to checkout
             </Button>

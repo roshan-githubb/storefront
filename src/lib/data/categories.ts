@@ -17,11 +17,12 @@ export const listCategories = async ({
       product_categories: HttpTypes.StoreProductCategory[]
     }>("/store/product-categories", {
       query: {
-        fields: "handle, name, rank",
+        fields: "handle, name, rank, parent_category_id",
         limit,
         ...query,
       },
-      cache: "no-cache",
+      cache: "force-cache",
+      next: { revalidate: 3600 },
     })
     .then(({ product_categories }) => product_categories)
 
@@ -34,7 +35,9 @@ export const listCategories = async ({
   )
 
   return {
-    categories: childrenCategories,
+    categories: childrenCategories.filter(
+      ({ parent_category_id }) => !parent_category_id
+    ),
     parentCategories: parentCategories,
   }
 }
@@ -50,8 +53,8 @@ export const getCategoryByHandle = async (categoryHandle: string[]) => {
           fields: "*category_children",
           handle,
         },
-        // next,
-        cache: "no-cache",
+        cache: "force-cache",
+        next: { revalidate: 300 },
       }
     )
     .then(({ product_categories }) => product_categories[0])

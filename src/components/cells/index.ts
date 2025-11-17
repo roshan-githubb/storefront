@@ -1,4 +1,4 @@
-import { Navbar } from "./Navbar/Navbar"
+import Navbar from "./Navbar/Navbar"
 import { CustomCarousel as Carousel } from "./Carousel/Carousel"
 import { Pagination } from "./Pagination/Pagination"
 import { ProductFilter } from "./ProductFilter/ProductFilter"
@@ -29,6 +29,7 @@ import { OrderAddresses } from "./OrderAddresses/OrderAddresses"
 import { OrderProductListItem } from "./OrderProductListItem/OrderProductListItem"
 import { OrderTimeline } from "./OrderTimeline/OrderTimeline"
 import { WishlistItem } from "./WishlistItem/WishlistItem"
+import { ProductAdditionalAttributes } from "./ProductAdditionalAttributes/ProductAdditionalAttributes"
 
 export {
   Navbar,
@@ -62,4 +63,5 @@ export {
   OrderProductListItem,
   OrderTimeline,
   WishlistItem,
+  ProductAdditionalAttributes,
 }

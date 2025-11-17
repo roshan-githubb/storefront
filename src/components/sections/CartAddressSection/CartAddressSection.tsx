@@ -13,12 +13,14 @@ import ShippingAddress from "@/components/organisms/ShippingAddress/ShippingAddr
 import { CheckCircleSolid } from "@medusajs/icons"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 
-export const CartAddressSection = ({
-  cart,
-  customer,
-}: {
+interface CartAddressSectionProps {
   cart: HttpTypes.StoreCart | null
   customer: HttpTypes.StoreCustomer | null
+}
+
+export const CartAddressSection: React.FC<CartAddressSectionProps> = ({
+  cart,
+  customer,
 }) => {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -33,11 +35,12 @@ export const CartAddressSection = ({
       cart?.shipping_address.postal_code &&
       cart?.shipping_address.country_code
   )
+
   const isOpen = searchParams.get("step") === "address" || !isAddress
 
   const { state: sameAsBilling, toggle: toggleSameAsBilling } = useToggleState(
     cart?.shipping_address && cart?.billing_address
-      ? compareAddresses(cart?.shipping_address, cart?.billing_address)
+      ? compareAddresses(cart.shipping_address, cart.billing_address)
       : true
   )
 
@@ -47,7 +50,7 @@ export const CartAddressSection = ({
     if (!isAddress) {
       router.replace(pathname + "?step=address")
     }
-  }, [isAddress])
+  }, [isAddress, router, pathname])
 
   const handleEdit = () => {
     router.replace(pathname + "?step=address")
@@ -70,6 +73,7 @@ export const CartAddressSection = ({
           </Text>
         )}
       </div>
+
       <form
         action={async (data) => {
           await formAction(data)
@@ -97,37 +101,34 @@ export const CartAddressSection = ({
             />
           </div>
         ) : (
-          <div>
-            <div className="text-small-regular">
-              {cart && cart.shipping_address ? (
-                <div className="flex items-start gap-x-8">
-                  <div className="flex items-start gap-x-1 w-full">
-                    <div>
-                      <Text className="txt-medium-plus font-bold">
-                        {cart.shipping_address.first_name}{" "}
-                        {cart.shipping_address.last_name}
-                      </Text>
-                      <Text>
-                        {cart.shipping_address.address_1}{" "}
-                        {cart.shipping_address.address_2},{" "}
-                        {cart.shipping_address.postal_code}{" "}
-                        {cart.shipping_address.city},{" "}
-                        {cart.shipping_address.country_code?.toUpperCase()}
-                      </Text>
-                      <Text>
-                        {cart.email}, {cart.shipping_address.phone}
-                      </Text>
-                    </div>
+          <div className="text-small-regular">
+            {cart?.shipping_address ? (
+              <div className="flex items-start gap-x-8">
+                <div className="flex items-start gap-x-1 w-full">
+                  <div>
+                    <Text className="txt-medium-plus font-bold">
+                      {cart.shipping_address.first_name}{" "}
+                      {cart.shipping_address.last_name}
+                    </Text>
+                    <Text>
+                      {cart.shipping_address.address_1}{" "}
+                      {cart.shipping_address.address_2},{" "}
+                      {cart.shipping_address.postal_code}{" "}
+                      {cart.shipping_address.city},{" "}
+                      {cart.shipping_address.country_code?.toUpperCase()}
+                    </Text>
+                    <Text>
+                      {cart.email}, {cart.shipping_address.phone}
+                    </Text>
                   </div>
                 </div>
-              ) : (
-                <div>
-                  <Spinner />
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <Spinner />
+            )}
           </div>
         )}
+
         {isAddress && !searchParams.get("step") && (
           <LocalizedClientLink href="/checkout?step=delivery">
             <Button className="mt-6" variant="tonal">
@@ -139,3 +140,5 @@ export const CartAddressSection = ({
     </div>
   )
 }
+
+CartAddressSection.displayName = "CartAddressSection"

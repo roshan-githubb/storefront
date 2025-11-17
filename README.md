@@ -1,40 +1,3 @@
-## STEPS TO RUN THE SERVER 
-
-""" 
-
-# Dev server 
-pm2 start npm --name "b2c-storefront-dev" -- run dev
-
-# Logging 
-
-pm2 logs b2c-storefront-dev
-pm2 status
-
-
-# Stop and  Delete Server
-pm2 logs b2c-storefront-dev
-pm2 status
-
-
-"""
-
-
-## How to update the deployed code 
-
-"""
-
-# SSH into Server and do `sudo su`
-# Then go to `/home/deltadot-marketfront/htdocs/marketfront.deltadotai.com`
-# `git pull` the changes from the Latest Git repo
-# The Server should automatically update, in case it doesn't Stop adn Restart the server using above commands
-
-"""
-
-
-
-
-
-
 ![B2C Storefront Cover](https://cdn.prod.website-files.com/6790aeffc4b432ccaf1b56e5/67a21bd27b4ac8b812c1d84f_B2C%20Storefront%20Cover.png)
 
 <div align="center">
@@ -146,5 +109,100 @@ npm run dev
 
 ### Guides
 
-<a href="https://www.algolia.com/doc/guides/security/api-keys/" target="_blank">How to get Aloglia Keys</a>
-<a href="https://talkjs.com/docs/Reference/Concepts/Sessions/" target="_blank">How to get TalkJs App ID</a>
+#### <a href="https://www.algolia.com/doc/guides/security/api-keys/" target="_blank">How to get Aloglia Keys</a>
+
+#### <a href="https://talkjs.com/docs/Reference/Concepts/Sessions/" target="_blank">How to get TalkJs App ID</a>
+
+### Configure Algolia index
+
+To work Algolia correctly you need to configure facets and searchable attributes. You can use import function to upload <a href="./algolia-config.json">algolia-config.json</a> file
+&nbsp;
+
+In Algolia dashboard chose your index and select Import configuration from Manage index dropdown menu
+&nbsp;
+
+<img alt="Algolia import" src="./public/algolia-import.png" />
+
+&nbsp;
+
+<a href="./algolia-config.json">algolia-config.json</a>
+
+```js
+{
+  "settings": {
+    "minWordSizefor1Typo": 4,
+    "minWordSizefor2Typos": 8,
+    "hitsPerPage": 20,
+    "maxValuesPerFacet": 100,
+    "searchableAttributes": [
+      "title",
+      "subtitle",
+      "brand.name",
+      "tags.value",
+      "type.value",
+      "categories.name",
+      "collection.title",
+      "variants.title"
+    ],
+    "numericAttributesToIndex": null,
+    "attributesToRetrieve": null,
+    "unretrievableAttributes": null,
+    "optionalWords": null,
+    "attributesForFaceting": [
+      "average_rating",
+      "filterOnly(categories.id)",
+      "categories.name",
+      "seller.handle",
+      "seller.store_status",
+      "filterOnly(supported_countries)",
+      "searchable(title)",
+      "variants.color",
+      "variants.condition",
+      "variants.prices.currency_code",
+      "variants.size"
+    ],
+    "attributesToSnippet": null,
+    "attributesToHighlight": null,
+    "paginationLimitedTo": 1000,
+    "attributeForDistinct": null,
+    "exactOnSingleWordQuery": "attribute",
+    "ranking": [
+      "typo",
+      "geo",
+      "words",
+      "filters",
+      "proximity",
+      "attribute",
+      "exact",
+      "custom"
+    ],
+    "customRanking": null,
+    "separatorsToIndex": "",
+    "removeWordsIfNoResults": "none",
+    "queryType": "prefixLast",
+    "highlightPreTag": "<em>",
+    "highlightPostTag": "</em>",
+    "alternativesAsExact": ["ignorePlurals", "singleWordSynonym"],
+    "renderingContent": {
+      "facetOrdering": {
+        "facets": {
+          "order": ["variants.color", "variants.size", "variants.condition"]
+        },
+        "values": {
+          "variants.color": {
+            "sortRemainingBy": "count"
+          },
+          "variants.condition": {
+            "sortRemainingBy": "count"
+          },
+          "variants.size": {
+            "sortRemainingBy": "count"
+          }
+        }
+      }
+    }
+  },
+  "rules": [],
+  "synonyms": []
+}
+```

@@ -44,7 +44,13 @@ type ShippingProps = {
   }
   availableShippingMethods:
     | (StoreCardShippingMethod &
-        { rules: any; seller_id: string; price_type: string; id: string }[])
+        {
+          rules: any
+          seller_id: string
+          price_type: string
+          id: string
+          amount?: number
+        }[])
     | null
 }
 
@@ -95,46 +101,59 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
     }
   }, [cart])
 
-  useEffect(() => {
-    if (_shippingMethods?.length) {
-      const promises = _shippingMethods
-        .filter((sm) => sm.price_type === "calculated")
-        .map((sm) => calculatePriceForShippingOption(sm.id, cart.id))
+useEffect(() => {
+  if (_shippingMethods?.length) {
+    setIsLoadingPrices(true) 
+    const promises = _shippingMethods
+      .filter((sm) => sm.price_type === "calculated")
+      .map((sm) => calculatePriceForShippingOption(sm.id, cart.id))
 
-      if (promises.length) {
-        Promise.allSettled(promises).then((res) => {
-          const pricesMap: Record<string, number> = {}
-          res
-            .filter((r) => r.status === "fulfilled")
-            .forEach((p) => (pricesMap[p.value?.id || ""] = p.value?.amount!))
+    if (promises.length) {
+      Promise.allSettled(promises).then((res) => {
+        const pricesMap: Record<string, number> = {}
+        res
+          .filter((r) => r.status === "fulfilled")
+          .forEach((p: any) => {
+            if (p.status === "fulfilled" && p.value) {
+              pricesMap[p.value.id] = p.value.amount
+            }
+          })
 
-          setCalculatedPricesMap(pricesMap)
-          setIsLoadingPrices(false)
-        })
-      }
+        setCalculatedPricesMap(pricesMap)
+        setIsLoadingPrices(false)
+      })
     }
-  }, [availableShippingMethods])
+  }
+}, [_shippingMethods, cart.id])
+
 
   const handleSubmit = () => {
     router.push(pathname + "?step=payment", { scroll: false })
   }
 
   const handleSetShippingMethod = async (id: string | null) => {
-    setIsLoadingPrices(true)
-    setError(null)
-
     if (!id) {
-      setIsLoadingPrices(false)
       return
     }
 
-    await setShippingMethod({ cartId: cart.id, shippingMethodId: id }).catch(
-      (err) => {
-        setError(err.message)
+    try {
+      setError(null)
+      setIsLoadingPrices(true)
+      const res = await setShippingMethod({
+        cartId: cart.id,
+        shippingMethodId: id,
+      })
+      if (!res.ok) {
+        return setError(res.error?.message)
       }
-    )
-
-    setIsLoadingPrices(false)
+    } catch (error: any) {
+      setError(
+        error?.message?.replace("Error setting up the request: ", "") ||
+          "An error occurred"
+      )
+    } finally {
+      setIsLoadingPrices(false)
+    }
   }
 
   useEffect(() => {
@@ -148,7 +167,16 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
       acc[sellerId] = []
     }
 
-    acc[sellerId].push(method)
+    const amount = Number(
+      method.price_type === "flat"
+        ? method.amount
+        : calculatedPricesMap[method.id]
+    )
+
+    if (!isNaN(amount)) {
+      acc[sellerId]?.push(method)
+    }
+
     return acc
   }, {})
 
@@ -164,10 +192,10 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
 
   return (
     <div className="border p-4 rounded-sm bg-ui-bg-interactive">
-      {missingModal && (
+      {/* {missingModal && (
         <Modal
           heading="Missing seller shipping option"
-          onClose={() => router.push("/cart")}
+          onClose={() => router.push(`/${pathname.split("/")[1]}/cart`)}
         >
           <div className="p-4">
             <h2 className="heading-sm">
@@ -190,7 +218,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
             </p>
           </div>
         </Modal>
-      )}
+      )} */}
       <div className="flex flex-row items-center justify-between mb-6">
         <Heading
           level="h2"

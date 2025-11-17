@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { HttpTypes } from "@medusajs/types"
 import { convertToLocale } from "@/lib/helpers/money"
+import { filterValidCartItems } from "@/lib/helpers/filter-valid-cart-items"
 import { DeleteCartItemButton } from "@/components/molecules"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { UpdateCartItemButton } from "@/components/molecules/UpdateCartItemButton/UpdateCartItemButton"
@@ -16,17 +17,16 @@ export const CartItemsProducts = ({
   delete_item?: boolean
   change_quantity?: boolean
 }) => {
+  // Filter out items with invalid data (missing prices/variants)
+  const validProducts = filterValidCartItems(products)
+
   return (
     <div>
-      {products.map((product) => {
+      {validProducts.map((product) => {
         const { options } = product.variant ?? {}
-        const original_total = convertToLocale({
-          amount: (product.compare_at_unit_price || 0) * product.quantity,
-          currency_code,
-        })
 
         const total = convertToLocale({
-          amount: product.total,
+          amount: product.subtotal ?? 0,
           currency_code,
         })
 
@@ -61,7 +61,8 @@ export const CartItemsProducts = ({
                 >
                   <div className="w-[100px] md:w-[200px] lg:w-[280px] mb-4 lg:mb-0">
                     <h3 className="heading-xs uppercase truncate">
-                      {product.subtitle}
+                      {product.product_title}
+                      {product.subtitle && ` - ${product.subtitle}`}
                     </h3>
                   </div>
                 </LocalizedClientLink>
@@ -92,12 +93,6 @@ export const CartItemsProducts = ({
                   )}
                 </div>
                 <div className="lg:text-right flex lg:block items-center gap-2 mt-4 lg:mt-0">
-                  {product.compare_at_unit_price &&
-                    total !== original_total && (
-                      <p className="line-through text-secondary label-md">
-                        {original_total}
-                      </p>
-                    )}
                   <p className="label-lg">{total}</p>
                 </div>
               </div>
