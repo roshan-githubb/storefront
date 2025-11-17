@@ -73,6 +73,7 @@ export default {
         secondary: "rgba(var(--content-secondary))",
         tertiary: "rgba(var(--content-tertiary))",
         disabled: "rgba(var(--content-disabled))",
+        myBlue: '#3A3A99',
 
         //from fignma design files
         contentOrange: "rgba(var(--content-orange))",

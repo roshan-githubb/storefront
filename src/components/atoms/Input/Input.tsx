@@ -47,7 +47,7 @@ export function Input({
   }
 
   return (
-    <label className="label-md">
+    <label className=" w-full label-md">
       {label}
       <div className="relative mt-2">
         {icon && (
@@ -58,7 +58,7 @@ export function Input({
 
         <input
           className={cn(
-            "w-full px-[16px] py-[12px] border rounded-sm bg-component-secondary focus:border-primary focus:outline-none focus:ring-0",
+            "w-full h-[38px] px-[16px] py-[12px] border rounded-md bg-component-secondary focus:border-primary focus:outline-none focus:ring-0",
             error && "border-negative focus:border-negative",
             props.disabled && "bg-disabled cursor-not-allowed",
             paddingY,

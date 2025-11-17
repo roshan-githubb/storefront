@@ -1,15 +1,23 @@
 import type { Metadata } from "next"
-import { Funnel_Display } from "next/font/google"
+import { Funnel_Display, Poppins } from "next/font/google"
 import './globals.css'
 import { Toaster } from "@medusajs/ui"
 import Head from "next/head"
 import { retrieveCart } from "@/lib/data/cart"
 import { Providers } from "./providers"
 
+// Existing Funnel_Display font (optional, still available)
 const funnelDisplay = Funnel_Display({
   variable: "--font-funnel-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
+})
+
+// Poppins font for global use
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
 })
 
 export const metadata: Metadata = {
@@ -49,14 +57,14 @@ export default async function RootLayout({
   const htmlLang = locale || "en"
 
   return (
-    <html lang={htmlLang} className="">
+    <html lang={htmlLang}>
       <Head>
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link rel="preconnect"  href="https://fonts.gstatic.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" />
         <link
           rel="preconnect"
           href="https://fonts.googleapis.com"
@@ -118,7 +126,7 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://api.mercurjs.com" />
       </Head>
       <body
-        className={`${funnelDisplay.className} antialiased bg-primary text-secondary relative`}
+        className={`${poppins.className} antialiased bg-primary text-secondary relative`}
       >
         <Providers cart={cart}>{children}</Providers>
         <Toaster position="top-right" />
