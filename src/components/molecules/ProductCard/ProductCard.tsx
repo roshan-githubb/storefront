@@ -7,8 +7,10 @@ import { HttpTypes } from "@medusajs/types"
 
 export const ProductCard = ({
   api_product,
+  locale
 }: {
   api_product: HttpTypes.StoreProduct | null
+  locale:string
 }) => {
   // Return nothing if no product
   if (!api_product || !api_product.variants?.[0]) return null
@@ -31,7 +33,6 @@ export const ProductCard = ({
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0
 
-  // Fallback product image
   const productImage =
     api_product?.images?.[0]?.url || "/images/product/wireless-headphone.jpg"
 
@@ -45,7 +46,7 @@ export const ProductCard = ({
   height={300}
   className={`rounded-sm
   object-contain md:object-cover 
-  bg-[#e5e5e5] 
+  bg-[#F8F8F8] 
   border border-[#999999]
   ${hasDiscount ? "h-[319px]" : "h-[300px]"}
   w-[196px] md:w-full`}
@@ -58,7 +59,7 @@ export const ProductCard = ({
         <div className="flex flex-col gap-1">
           {/* Product Title */}
           <Link
-            href={`/products/${api_product.id}`}
+            href={`/${locale}/products/${api_product.id}`}
             className="block hover:underline"
           >
             <h2 className="text-[clamp(14px,2vw,18px)] font-normal text-[#111111]">
