@@ -56,6 +56,7 @@ const showFAQLabel = pathname == "/np/footer/faq"
 
 
   const goToCheckoutPage = () => {
+
     router.push(`/check`);
   };
 
