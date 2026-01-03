@@ -13,16 +13,12 @@ export function NavbarSearch() {
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (search) {
-      router.push(`/categories?query=${search}`)
-    } else {
-      router.push(`/categories`)
-    }
+    router.push(search ? `/products?query=${search}` : `/products`)
   }
 
   return (
     <form
-      className="flex items-center flex-1 min-w-0 max-w-full"
+      className="flex items-center flex-1 min-w-0 max-w-[420px]"
       method="POST"
       onSubmit={submitHandler}
     >
@@ -31,6 +27,11 @@ export function NavbarSearch() {
         placeholder="Search product"
         value={search}
         changeValue={setSearch}
+        className="
+          pl-10      
+          md:pl-12  
+          w-full
+        "
       />
       <input type="submit" className="hidden" />
     </form>

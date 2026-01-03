@@ -20,10 +20,12 @@ import { HomeProductsCarousel } from "./HomeProductsCarousel/HomeProductsCarouse
 import { ProductGallery } from "./ProductGallery/ProductGallery"
 import { ProductDetails } from "./ProductDetails/ProductDetails"
 import { AlgoliaProductSidebar } from "./ProductSidebar/AlgoliaProductSidebar"
-import { Addresses } from "./Addressess/Addresses"
+// import { Addresses } from "./Addressess/Addresses"
 import { ReviewsToWrite } from "./Reviews/ReviewsToWrite"
 import { ReviewsWritten } from "./Reviews/ReviewsWritten"
 import { CartEmpty } from "./CartEmpty/CartEmpty"
+import StickyCartBar from "./StickyCartBar/StickyCartBar"
+
 
 export {
   ProductCard,
@@ -48,8 +50,9 @@ export {
   ProductGallery,
   ProductDetails,
   AlgoliaProductSidebar,
-  Addresses,
+  // Addresses,
   ReviewsToWrite,
   ReviewsWritten,
   CartEmpty,
+  StickyCartBar,
 }

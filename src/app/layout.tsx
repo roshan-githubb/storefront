@@ -2,9 +2,11 @@ import type { Metadata } from "next"
 import { Funnel_Display, Poppins } from "next/font/google"
 import './globals.css'
 import { Toaster } from "@medusajs/ui"
+import { Toaster as HotToaster } from "react-hot-toast"
 import Head from "next/head"
 import { retrieveCart } from "@/lib/data/cart"
 import { Providers } from "./providers"
+import Script from "next/script"
 
 // Existing Funnel_Display font (optional, still available)
 const funnelDisplay = Funnel_Display({
@@ -141,8 +143,13 @@ export default async function RootLayout({
       <body
         className={`${poppins.variable} antialiased bg-primary text-secondary relative`}
       >
+        <Script
+          src="/flutter-listener.js"
+          strategy="beforeInteractive"
+        />
         <Providers cart={mappedCart}>{children}</Providers>
         <Toaster position="top-right" />
+        <HotToaster position="top-right" />
       </body>
     </html>
   )

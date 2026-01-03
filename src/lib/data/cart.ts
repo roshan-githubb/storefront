@@ -217,7 +217,7 @@ export async function deleteLineItem(lineId: string) {
   }
 
   await sdk.store.cart
-    .deleteLineItem(cartId, lineId, headers)
+    .deleteLineItem(cartId, lineId, {})
     .then(async () => {
       const cartCacheTag = await getCacheTag("carts")
       await revalidateTag(cartCacheTag)
@@ -264,6 +264,7 @@ export async function initiatePaymentSession(
     .then(async (resp) => {
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
+      console.log('payment session initiate response, cart and data ', {resp, cart, data})
       return resp
     })
     .catch(medusaError)
@@ -357,11 +358,13 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
     if (!formData) {
       throw new Error("No form data found when setting addresses")
     }
-    const cartId = getCartId()
+    const cartId = await getCartId()
     if (!cartId) {
       throw new Error("No existing cart found when setting addresses")
     }
 
+    const currentCart = await retrieveCart(cartId)
+    
     const data = {
       shipping_address: {
         first_name: formData.get("shipping_address.first_name"),
@@ -375,8 +378,15 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
         province: formData.get("shipping_address.province"),
         phone: formData.get("shipping_address.phone"),
       },
-      email: formData.get("email"),
     } as any
+
+    const emailFromForm = formData.get("email")
+    if (!currentCart?.email && emailFromForm) {
+      data.email = emailFromForm
+      console.log("Setting email on cart:", emailFromForm)
+    } else {
+      console.log("Skipping email update. Current cart email:", currentCart?.email, "Form email:", emailFromForm)
+    }
 
     // const sameAsBilling = formData.get("same_as_billing")
     // if (sameAsBilling === "on") data.billing_address = data.shipping_address
@@ -404,6 +414,65 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
 }
 
 /**
+ * Sets addresses on a cart using the provided cart ID (for localStorage-based cart systems)
+ * @param cartId - The cart ID from localStorage
+ * @param addressData - The address data to set
+ * @returns Error message on failure, null on success
+ */
+export async function setAddressesWithCartId(
+  cartId: string,
+  addressData: {
+    email?: string
+    shipping_address: {
+      first_name: string
+      last_name: string
+      address_1: string
+      address_2?: string
+      company?: string
+      postal_code: string
+      city: string
+      country_code: string
+      province: string
+      phone: string
+    }
+  }
+) {
+  try {
+    if (!cartId) {
+      throw new Error("No cart ID provided")
+    }
+
+    // Set the cart ID in cookies temporarily so updateCart can use it
+    await setCartId(cartId)
+
+    const currentCart = await retrieveCart(cartId)
+    
+    const data = {
+      shipping_address: addressData.shipping_address,
+      billing_address: addressData.shipping_address, // Set billing same as shipping
+    } as any
+
+    // Always try to update email if provided
+    // Note: Medusa may ignore this if cart has a customer, but we'll try anyway
+    if (addressData.email) {
+      data.email = addressData.email
+      console.log("Attempting to set email on cart:", addressData.email, "Cart has customer:", !!currentCart?.customer_id)
+    }
+
+    // Use the existing updateCart function
+    const result = await updateCart(data)
+    console.log("Cart updated. Email in response:", result.email)
+
+    await revalidatePath("/cart")
+    
+    return null // Success
+  } catch (e: any) {
+    console.error("Error setting addresses:", e)
+    return e.message
+  }
+}
+
+/**
  * Places an order for a cart. If no cart ID is provided, it will use the cart ID from the cookies.
  * @param cartId - optional - The ID of the cart to place an order for.
  * @returns The cart object if the order was successful, or null if not.
@@ -419,22 +488,21 @@ export async function placeOrder(cartId?: string) {
     ...(await getAuthHeaders()),
   }
 
-  const res = await fetchQuery(`/store/carts/${id}/complete`, {
-    method: "POST",
-    headers,
-  })
+  const cartRes: any = await sdk.store.cart
+    .complete(id, {}, headers)
+    .then(async (cartRes) => {
+      const cartCacheTag = await getCacheTag("carts")
+      revalidateTag(cartCacheTag)
+      return cartRes
+    })
+    .catch(medusaError)
 
-  const cartCacheTag = await getCacheTag("carts")
-  revalidateTag(cartCacheTag)
-
-  if (res?.data?.order_set) {
-    revalidatePath("/user/reviews")
-    revalidatePath("/user/orders")
+  if (cartRes?.order_set) {
     removeCartId()
-    redirect(`/order/${res?.data?.order_set.orders[0].id}/confirmed`)
+    redirect(`/order/${cartRes?.order_set.orders[0].id}/confirmed`)
   }
 
-  return res
+  return cartRes.order_set.cart
 }
 
 /**
@@ -529,7 +597,7 @@ export async function updateRegionWithValidation(
           )
           if (item) {
             try {
-              await sdk.store.cart.deleteLineItem(cart.id, item.id, headers)
+              await sdk.store.cart.deleteLineItem(cart.id, item.id, {})
               removedItems.push(item.product_title || "Unknown product")
             } catch (deleteError) {
               // Silent failure - item removal failed but continue

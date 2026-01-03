@@ -1,188 +1,228 @@
-import {
-  BannerSection,
-  BlogSection,
-  Hero,
-  HomeCategories,
-  HomeProductSection,
-  ShopByStyleSection,
-} from "@/components/sections"
+import { SectionHeader } from "@/components/atoms/SectionHeader/SectionHeader";
+import { ItemCategoryCard } from "@/components/cells/CategoryCard/CategoryCard";
+import CarouselBanner from "@/components/molecules/BannerCarousel/BannerCarousel";
+import { HomeProductCard } from "@/components/molecules/HomeProductCard/HomeProductCard";
+import { HorizontalScroller } from "@/components/molecules/HorizontalScroller/HorizontalScrollbar";
+import HeroVideo from "@/components/molecules/VideoComponent/VideoComponent";
+import HomePageSkeleton from "@/components/organisms/HomepageSkeleton/HomepageSkeleton";
+import FlashItems from "@/components/sections/FlashItems/FlashItems";
+import TopProducts from "@/components/sections/TopProducts/TopProducts";
+import { listProducts } from "@/lib/data/products";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { getBanners } from "@/lib/get-banners";
+import { sortProductsByInventory } from "@/lib/sortProducts/sortProducts";
+import { getProductRatingSummaries } from "@/lib/helpers/rating-helpers";
 
-import type { Metadata } from "next"
-import { headers } from "next/headers"
-import Script from "next/script"
-import { listRegions } from "@/lib/data/regions"
-import { toHreflang } from "@/lib/helpers/hreflang"
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}): Promise<Metadata> {
-  const { locale } = await params
-
-  const headersList = await headers()
-  const host = headersList.get("host")
-  const protocol = headersList.get("x-forwarded-proto") || "https"
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`
-
-  // Build alternates based on available regions (locales)
-  let languages: Record<string, string> = {}
-  try {
-    const regions = await listRegions()
-    const locales = Array.from(
-      new Set(
-        (regions || [])
-          .map((r) => r.countries?.map((c) => c.iso_2) || [])
-          .flat()
-          .filter(Boolean)
-      )
-    ) as string[]
-
-    languages = locales.reduce<Record<string, string>>((acc, code) => {
-      const hrefLang = toHreflang(code)
-      acc[hrefLang] = `${baseUrl}/${code}`
-      return acc
-    }, {})
-  } catch {
-    // Fallback: only current locale
-    languages = { [toHreflang(locale)]: `${baseUrl}/${locale}` }
-  }
-
-  const title = "Home"
-  const description =
-    "Welcome to Mercur B2C Demo! Create a modern marketplace that you own and customize in every aspect with high-performance, fully customizable storefront."
-  const ogImage = "/B2C_Storefront_Open_Graph.png"
-  const canonical = `${baseUrl}/${locale}`
-
-  return {
-    title,
-    description,
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        "max-image-preview": "large",
-        "max-video-preview": -1,
-        "max-snippet": -1,
-      },
-    },
-    alternates: {
-      canonical,
-      languages: {
-        ...languages,
-        "x-default": baseUrl,
-      },
-    },
-    openGraph: {
-      title: `${title} | ${
-        process.env.NEXT_PUBLIC_SITE_NAME ||
-        "Mercur B2C Demo - Marketplace Storefront"
-      }`,
-      description,
-      url: canonical,
-      siteName:
-        process.env.NEXT_PUBLIC_SITE_NAME ||
-        "Mercur B2C Demo - Marketplace Storefront",
-      type: "website",
-      images: [
-        {
-          url: ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`,
-          width: 1200,
-          height: 630,
-          alt:
-            process.env.NEXT_PUBLIC_SITE_NAME ||
-            "Mercur B2C Demo - Marketplace Storefront",
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`],
-    },
-  }
+interface CategoryItemMetadata {
+  thumbnail_url: string;
+}
+interface CategoryItem {
+  created_at: string;
+  description: string;
+  handle: string;
+  id: string;
+  name: string;
+  parent_category_id: number;
+  rank: number;
+  updated_at: string;
+  metadata: CategoryItemMetadata;
 }
 
-export default async function Home({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}) {
-  const { locale } = await params
 
-  const headersList = await headers()
-  const host = headersList.get("host")
-  const protocol = headersList.get("x-forwarded-proto") || "https"
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`
+const brands = [
+  { name: "Nike", image: "/images/brands/Nike.png" },
+  { name: "Maybeline", image: "/images/brands/Maybeline.png" },
+  { name: "Dell", image: "/images/brands/dell.png" },
+  { name: "Adidas", image: "/images/brands/adidas.png" },
+  { name: "Gucci", image: "/images/brands/gucci.png" },
+  { name: "H&M", image: "/images/brands/H&M.png" },
+  { name: "Prada", image: "/images/brands/Prada.png" },
+  { name: "Philips", image: "/images/brands/Philips.png" },
+];
 
-  const siteName =
-    process.env.NEXT_PUBLIC_SITE_NAME ||
-    "Mercur B2C Demo - Marketplace Storefront"
+const topSectionProducts = [
+  { name: "Flash Sale", image: "/images/home-top-card/flash-sale.png", link: "/flash-sale" },
+  { name: "Upto 20% OFF", image: "/images/home-top-card/20-percent-off.png" },
+  { name: "New Arrivals", image: "/images/home-top-card/add-cart.png" },
+  { name: "Best Sellers", image: "/images/home-top-card/buy-any-three.png" },
+]
 
-  return (
-    <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start text-primary">
-      <link
-        // rel="preload"
-        as="image"
-        href="/images/hero/Image.jpg"
-        imageSrcSet="/images/hero/Image.jpg 700w"
-        imageSizes="(min-width: 1024px) 50vw, 100vw"
-      />
-      {/* Organization JSON-LD */}
-      <Script
-        id="ld-org"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            name: siteName,
-            url: `${baseUrl}/${locale}`,
-            logo: `${baseUrl}/favicon.ico`,
-          }),
-        }}
-      />
-      {/* WebSite JSON-LD */}
-      <Script
-        id="ld-website"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: siteName,
-            url: `${baseUrl}/${locale}`,
-            inLanguage: toHreflang(locale),
-          }),
-        }}
-      />
+const categories = [
+  { category: "Kitchen Essentials", image: "/images/categories/kitchen-essentials.png" },
+  { category: "Decor", image: "/images/categories/decor.png" },
+  { category: "Lighting Lamps", image: "/images/categories/lighting-lamps.png" },
+  { category: "Bags & Wallets", image: "/images/categories/bags-&-wallets.png" },
+  { category: "Makeup", image: "/images/categories/makeup.png" },
+  { category: "Clothing", image: "/images/categories/clothing.png" },
+  { category: "Skincare", image: "/images/categories/skincare.png" },
+  { category: "Electronics", image: "/images/categories/electronics.png" },
+];
 
-      <Hero
-        image="/images/hero/Image.jpg"
-        heading="Snag your style in a flash"
-        paragraph="Buy, sell, and discover pre-loved gems from the trendiest brands."
-        buttons={[
-          { label: "Buy now", path: "/categories" },
-          {
-            label: "Sell now",
-            path:
-              process.env.NEXT_PUBLIC_VENDOR_URL ||
-              "https://vendor.mercurjs.com",
-          },
-        ]}
-      />
-      <div className="px-4 lg:px-8 w-full">
-        <HomeProductSection heading="trending listings" locale={locale} home />
-      </div>
-      <div className="px-4 lg:px-8 w-full">
-        <HomeCategories heading="SHOP BY CATEGORY" />
-      </div>
-      <BannerSection />
-      <ShopByStyleSection />
-      <BlogSection />
-    </main>
-  )
+
+
+
+
+
+interface Params {
+  locale: string;
+}
+
+
+export default async function HomePage({ params }: { params: Params }) {
+  const { locale } = await params;
+  const {
+    response: { products: jsonLdProducts },
+  } = await listProducts({
+    countryCode: locale,
+    queryParams: { limit: 8, order: "created_at",
+    },
+  })
+  
+  const sortedProducts = sortProductsByInventory(jsonLdProducts)
+  
+  const productIds = sortedProducts?.map((p: any) => p.id) || []
+  const ratingSummaryMap = await getProductRatingSummaries(productIds)
+
+  // console.log("item list and origianl list ",  jsonLdProducts)
+  const url = `${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/product-categories`;
+
+  try {
+    const headers = {
+      "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!,
+      "Content-Type": "application/json",
+    };
+
+    const res = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      headers,
+    });
+
+
+
+    // Log the exact error body from Medusa (super useful!)
+    if (!res.ok) {
+      const errorText = await res.text();
+
+      return notFound();
+    }
+
+    const data = await res.json();
+    // console.log("Full categories response from Medusa:", data.product_categories);
+
+    const bannerCarousel = await getBanners();
+
+    return (
+      <Suspense fallback={<HomePageSkeleton />}>
+        <div className="space-y-6 px-4 lg:px-8 py-4 ">
+          {/* Top horizontal category scroller (item category cards) with visible arrows */}
+          <HorizontalScroller >
+            {topSectionProducts.map((c: any) => (
+              <div key={c.name} className=" flex-shrink-0">
+                <ItemCategoryCard imageUrl={c?.image || "/product-placeholder.png"} label={c.name} shape="rounded" height={80} width={80} link={c?.link??"/coming-soon"} />
+              </div>
+            ))}
+          </HorizontalScroller>
+
+
+
+          {/* Large banner carousel */}
+          <div className="pt-0">
+            {/* <CarouselBanner slides={bannerSlides} /> */}
+            <CarouselBanner bannerCarousel={bannerCarousel} />
+          </div>
+
+          {/* Circular categories (grid) */}
+          {/* <SectionHeader title="Categories" actionLabel="See All"  /> */}
+          {/* <div className="grid grid-cols-4 gap-4">
+          {categories.map((item: any) => (
+            <ItemCategoryCard key={item?.category} imageUrl={item.image || "/images/not-available/not-available.png"} label={item?.category} shape="circle" height={70} width={70} />
+          ))}
+        </div> */}
+          {/* <HorizontalScroller > */}
+          <div className="grid grid-cols-4 gap-4">
+            {data.product_categories.slice(0, 8).map((c: CategoryItem) => (
+              <div key={c.id} className=" flex-shrink-0">
+                <ItemCategoryCard imageUrl={c?.metadata?.thumbnail_url || "/product-placeholder.png"} label={c.name} shape="circle" height={70} width={70} link={`/categories/${c?.handle}`} />
+              </div>
+            ))}
+          </div>
+          
+          {/* Flash Sale Section */}
+          <Suspense fallback={
+            <div className="animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+              <div className="flex gap-2 overflow-hidden">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-[180px] h-48 bg-gray-200 rounded flex-shrink-0"></div>
+                ))}
+              </div>
+            </div>
+          }>
+            <FlashItems locale={locale} />
+          </Suspense>
+         
+
+          {/* Recommended for you — horizontal, hidden scrollbar */}
+          <SectionHeader title="Recommended for you" actionLabel="See All" link="/recommended" />
+          <div className="overflow-x-scroll gap-x-2 mt-2 flex no-scrollbar">
+            {sortedProducts.map((r, index) => (
+              <div key={r.id} className="w-[180px] flex-shrink-0 ">
+                <HomeProductCard
+                  api_product={r}
+                  allProducts={sortedProducts}
+                  productIndex={index}
+                  ratingSummary={ratingSummaryMap[r.id]}
+                // hasOfferSticker={true}
+                />
+
+                {/* <HomeProductCard id={r?.id} imageUrl={r?.thumbnail ?? "/images/product-placeholder.png"} title={r?.title ?? ""} currentPrice={r?.variants?.[0]?.calculated_price?.calculated_amount ?? 0} description={r?.description ?? ""} /> */}
+              </div>
+            ))}
+          </div>
+
+          {/* Top brands (use item category card circular) */}
+          <SectionHeader title="Top Brands" actionLabel="See All" />
+          <div className="grid grid-cols-4 gap-4">
+            <>
+              {brands.map((brand: any) => (
+                // <div>
+                <ItemCategoryCard key={brand?.name} imageUrl={brand?.image || "/images/not-available/not-available.png"} label={brand?.name} shape="circle" height={70} width={70} link="/coming-soon" />
+                // </div>
+              ))}</>
+          </div>
+
+          {/* Best deals */}
+          <SectionHeader title="Best Deals" actionLabel="See All" />
+          <HorizontalScroller className="no-scrollbar !mt-1">
+            {sortedProducts.map((r, index) => (
+              <div key={r.id} className="w-[180px] flex-shrink-0">
+                <HomeProductCard 
+                  api_product={r} 
+                  allProducts={sortedProducts}
+                  productIndex={index}
+                  ratingSummary={ratingSummaryMap[r.id]}
+                />
+              </div>
+            ))}
+          </HorizontalScroller>
+
+          {/* Advert video section */}
+          <HeroVideo videoSrc="/videos/watch-time.mp4" />
+
+          {/* Most Popular */}
+          <TopProducts/>
+        </div >
+      </Suspense>
+
+    );
+
+    // return <ProductDetailClient product={product} />;
+  } catch (err) {
+
+    return notFound();
+  }
+
 }

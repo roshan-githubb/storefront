@@ -3,7 +3,6 @@ import { getCategoryByHandle } from "@/lib/data/categories"
 import { Suspense } from "react"
 
 import type { Metadata } from "next"
-import { Breadcrumbs } from "@/components/atoms"
 import { AlgoliaProductsListing, ProductListing } from "@/components/sections"
 import { notFound } from "next/navigation"
 import isBot from "@/lib/helpers/isBot"
@@ -156,15 +155,17 @@ async function Category({
           }),
         }}
       />
-      <div className="hidden md:block mb-2">
+      {/* <div className="hidden md:block mb-2">
         <Breadcrumbs items={breadcrumbsItems} />
-      </div>
+      </div> */}
 
-      <h1 className="heading-xl uppercase">{category.name}</h1>
+      <h1 className="heading-md uppercase">{category.name}</h1>
 
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !ALGOLIA_ID || !ALGOLIA_SEARCH_KEY ? (
-          <ProductListing category_id={category.id} showSidebar />
+          <div className="">
+            <ProductListing category_id={category.id}  />
+          </div>
         ) : (
           <AlgoliaProductsListing
             category_id={category.id}

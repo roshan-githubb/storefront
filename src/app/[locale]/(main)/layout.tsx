@@ -1,8 +1,9 @@
-import { Footer, Header } from "@/components/organisms"
+import { Footer, Header, StickyCartBar } from "@/components/organisms"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { checkRegion } from "@/lib/helpers/check-region"
 import { Session } from "@talkjs/react"
 import { redirect } from "next/navigation"
+import { Toaster } from "@/components/ui/toaster"
 
 export default async function RootLayout({
   children,
@@ -17,6 +18,7 @@ export default async function RootLayout({
   const user = await retrieveCustomer()
   const regionCheck = await checkRegion(locale)
 
+
   if (!regionCheck) {
     return redirect("/")
   }
@@ -25,8 +27,11 @@ export default async function RootLayout({
     return (
       <>
         <Header />
+        <div className="!pt-[68px]"></div>
         {children}
         <Footer />
+        <StickyCartBar />
+        <Toaster />
       </>
     )
 
@@ -34,8 +39,11 @@ export default async function RootLayout({
     <>
       <Session appId={APP_ID} userId={user.id}>
         <Header />
+        <div className="!pt-[68px]"></div>
         {children}
         <Footer />
+        <StickyCartBar />
+        <Toaster />
       </Session>
     </>
   )
